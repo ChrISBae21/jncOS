@@ -1,56 +1,36 @@
-#include "lwp.h"
+#include "rr_sched.h"
 
 
 #include <stddef.h>
 #include <stdio.h>
 
-typedef struct jobinfo_st *job;
-typedef struct jobinfo_st {
-  tid_t         tid;            /* lightweight process id  */
-  unsigned long *stack;         /* Base of allocated stack */
-  size_t        stacksize;      /* Size of allocated stack */
-  rfile         state;          /* saved registers         */
-  unsigned int  status;         /* exited? exit status?    */
-} context;
+#define STACK_SIZE 1024
 
 
-typedef struct job_wrapper {
-    
-    Job nextJob;
-    Job prevJob;
-} Job;
+static Job head = NULL;
+static Job tail = NULL;
+static int jobCount = 0;
 
 
-typedef struct blocked_list {
-
-} blocked_list;
-
-
-
-static job head = NULL;
-static job tail = NULL;
-static int job_count = 0;
-
-
-void rr_admit(job new_job) {
+void rr_admit(Job newJob) {
     /* scheduler not initialized */
-    if(job_count == 0) {
-        head = new_job;
-        tail = new_job;
-        new_job->sched_one = new_job;
+    if(jobCount == 0) {
+        head = newJob;
+        tail = newJob;
+        newJob->nextJob = newJob;
     }
     /* jobs already in the scheduler, append to the end */
     else {
-        new_job->sched_one = tail->sched_one;
-        tail->sched_one = new_job;
-        tail = new_job;
+        newJob->nextJob = tail->nextJob;
+        tail->nextJob = newJob;
+        tail = newJob;
     }
     
-    job_count++;
+    jobCount++;
 }
 
-void rr_remove(job rem_job) {
-    job current;
+void rr_remove(Job rem_job) {
+    Job current;
     /* if the head is the only one in the scheduler */
     if( (head == tail) && (head == rem_job) ) {
         tail = NULL;
@@ -58,42 +38,42 @@ void rr_remove(job rem_job) {
     }
     /* if removing the head */
     else if (head == rem_job){
-        head = rem_job->sched_one;
-        tail->sched_one = head;
+        head = rem_job->nextJob;
+        tail->nextJob = head;
     }
     /* multiple jobs in the scheduler*/
     else {
         current = head;
         /* iterate through the list of jobs */
-        while(current->sched_one != rem_job) {
-            current = current->sched_one;
+        while(current->nextJob != rem_job) {
+            current = current->nextJob;
             if (current == tail){
                 return;
             }
         }
         /* if removing the tail */
-        if(current->sched_one == tail) {
+        if(current->nextJob == tail) {
             tail = current;        
         }
         /* change pointer references */
-        current->sched_one = rem_job->sched_one;
+        current->nextJob = rem_job->nextJob;
     }
     
-    job_count--;
+    jobCount--;
 }
 
-job rr_next(void) {
-    job nextjob;
+Job rr_next(void) {
+    Job nextjob;
     if(head == NULL) {
         return NULL;
     }
-    /* shift over the next job to be run */
+    /* shift over the next Job to be run */
     nextjob = head;
-    tail = tail->sched_one;
-    head = head->sched_one;
+    tail = tail->nextJob;
+    head = head->nextJob;
     return nextjob;
 }
 
 int rr_qlen(void) {
-    return job_count;
+    return jobCount;
 }
