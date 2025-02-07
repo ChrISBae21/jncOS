@@ -4,8 +4,8 @@
 enum
 {
     // The GPIO registers base address for BCM2700
-    GPIO_BASE = 0x3F200000,
-    // GPIO_BASE = 0xFE200000,  // BCM2711
+    // GPIO_BASE = 0x3F200000,
+    GPIO_BASE = 0xFE200000,  // BCM2711
 
     GPFSEL0     = (GPIO_BASE + 0x00),
     GPFSEL1     = (GPIO_BASE + 0x04),
@@ -21,8 +21,8 @@ enum
 enum
 {
     // The base address for UART for BCM2700
-    UART0_BASE = 0x3F201000,
-    // UART0_BASE = 0xFE201000,  // BCM2711
+    // UART0_BASE = 0x3F201000,
+    UART0_BASE = 0xFE201000,  // BCM2711
 
     UART0_DR     = (UART0_BASE + 0x00),
     UART0_RSRECR = (UART0_BASE + 0x04),
@@ -84,8 +84,13 @@ void init_uart() {
 
     write_reg(UART0_ICR, 0x7FF);        /* clears pending interrupt */
 
-    write_reg(UART0_IBRD, 1);           /* integer portion of baudrate divisor */
-    write_reg(UART0_FBRD, 40);          /* decimal portion of baudrate divisor */
+
+    /* 115200 baud */
+    // write_reg(UART0_IBRD, 1);           /* integer portion of baudrate divisor */
+    // write_reg(UART0_FBRD, 40);          /* decimal portion of baudrate divisor */
+
+    write_reg(UART0_IBRD, 26);           /* integer portion of baudrate divisor */
+    write_reg(UART0_FBRD, 2);          /* decimal portion of baudrate divisor */
 
     write_reg(UART0_LCRH, ((1 << 4)|        /* enable FIFOs */
                            (0b11 << 5))     /* 8-bit words */
