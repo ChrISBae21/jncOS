@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include "uart.h"
 
-void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags)
-{
+void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
+    /* cast to void types */
     (void)r0;
     (void)r1;
     (void)atags;
@@ -13,19 +13,15 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags)
     print_intro();
 
     /* print input */
-    while (1)
-    {
+    while (1) {
         c = uart_getc();
-        if (c == '\r')
-        {
+        if (c == '\r') {
             uart_putc('\n');
         }
-        else if (c == 127)
-        {
+        else if (c == 127) {
             uart_print("\b \b");
         }
-        else
-        {
+        else {
             uart_putc(c);
         }
     }

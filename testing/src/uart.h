@@ -5,8 +5,7 @@
 #include <stdint.h>
 #include "utility.h"
 
-enum
-{
+enum {
     // The GPIO registers base address for BCM2700
     // GPIO_BASE = 0x3F200000,
     GPIO_BASE = 0xFE200000, // BCM2711
@@ -21,8 +20,7 @@ enum
     GPPUDCLK0 = (GPIO_BASE + 0x98)
 };
 
-enum
-{
+enum {
     // The base address for UART for BCM2700
     // UART0_BASE = 0x3F201000,
     UART0_BASE = 0xFE201000, // BCM2711

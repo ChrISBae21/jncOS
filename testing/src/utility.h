@@ -11,7 +11,7 @@ static inline void delay(int32_t count)
                  : "=r"(count) : [count] "0"(count) : "cc");
 }
 
-void write_reg(uint32_t reg, uint32_t data);
-uint32_t read_reg(uint32_t reg);
+void write_reg32(uint32_t reg, uint32_t data);
+uint32_t read_reg32(uint32_t reg);
 
 #endif
