@@ -1,11 +1,11 @@
 #include "strings.h"
 
 void *memset(void *dst, int c, size_t n) {
-    unsigned char *tmp = (unsigned char*)dest;
+    unsigned char *tmp = (unsigned char*)dst;
     for(int i = 0; i < n; i++) {
         *tmp++ = (unsigned char)c;
     }
-
+    return dst;
 }
 void *memcpy(void *dest, const void *src, size_t n) {
     unsigned char *to = (unsigned char*)dest;
@@ -14,6 +14,7 @@ void *memcpy(void *dest, const void *src, size_t n) {
     for(int i = 0; i < n; i++) {
         *to++ = *from++;
     }
+    return dest;
 }
 size_t strlen(const char *s) {
     size_t len = 0;
@@ -46,15 +47,15 @@ int strcmp(const char *s1, const char *s2) {
 }
 const char *strchr(const char *s, int c) {
 
-    while (*str != '\0') {
-        if (*str == (char)c) {
-          return str;
+    while (*s != '\0') {
+        if (*s == (char)c) {
+          return s;
         }
-        str++;
+        s++;
     }
 
     if ((char)c == '\0') {
-        return str;
+        return s;
     }
     return NULL;
 
@@ -62,5 +63,6 @@ const char *strchr(const char *s, int c) {
 
 /* needs to use malloc? */
 char *strdup(const char *s) {
+    return NULL;
 
 }

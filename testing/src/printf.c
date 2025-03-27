@@ -14,11 +14,11 @@ int printk(const char *fmt, ...) {
             i++;
             switch(fmt[i]) {
                 case 'd':   /* int */
-                    print_count += print_int((int)va_arg(args), int);
+                    print_count += print_int((int)va_arg(args, int));
                     break;
 
                 case 'u':   /* unsigned int */
-                    print_count += print_uint((unsigned int)va_arg(args), unsigned int);
+                    print_count += print_uint((unsigned int)va_arg(args, unsigned int));
                     break;
 
                 case 'x':   /* int hex */
@@ -26,7 +26,7 @@ int printk(const char *fmt, ...) {
                     break;
                 
                 case 'c':   /* char */
-                    print_char(v_arg(args, char));
+                    print_char(va_arg(args, int));
                     print_count++;
                     break;
                 
@@ -35,7 +35,7 @@ int printk(const char *fmt, ...) {
                     break;
 
                 case 'h':   /* short */
-                    i++
+                    i++;
                     switch(fmt[i]) {
                         case 'd':   /* signed short */
                             print_count += print_int((short)va_arg(args, int));
@@ -50,7 +50,7 @@ int printk(const char *fmt, ...) {
                     break;
                 
                 case 'l':   /* long */
-                    i++
+                    i++;
                     switch(fmt[i]) {
                         case 'd':   /* signed long */
                             print_count += print_int((long)va_arg(args, long));
@@ -65,7 +65,7 @@ int printk(const char *fmt, ...) {
                     break;
 
                 case 'q': /* long long */
-                    i++
+                    i++;
                     switch(fmt[i]) {
                         case 'd':   /* signed long long */
                             print_count += print_int((long long)va_arg(args, long long));
@@ -143,8 +143,8 @@ void print_char(char c) {
 
 int print_str(const char *s) {
     int i;
-    for (i = 0; str[i] != '\0'; i++) {
-        uart_putc((unsigned char)str[i]);
+    for (i = 0; s[i] != '\0'; i++) {
+        uart_putc((unsigned char)s[i]);
     }
     return i;
 

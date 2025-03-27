@@ -1,7 +1,19 @@
 #include <stdarg.h>
-extern int printk(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
-extern void print_char(char);
-extern void print_str(const char *);
-extern void print_uchar(unsigned char);
-extern void print_short(short);
-extern void print_long_hex(long);
+
+int printk(const char *fmt, ...);
+
+int print_int(long long n);
+int print_uint(unsigned long long n);
+void print_uchar(unsigned char c);
+
+void print_char(char c);
+
+
+int print_str(const char *s);
+
+
+int print_hex(unsigned long long n, int data_size);
+
+
+
+int print_pointer(void* ptr);

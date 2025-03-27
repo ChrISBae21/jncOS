@@ -1,5 +1,5 @@
 #include <stdint.h>
-
+#include <stddef.h>
 
 extern void *memset(void *dst, int c, size_t n);
 extern void *memcpy(void *dest, const void *src, size_t n);
