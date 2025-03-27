@@ -1,6 +1,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "uart.h"
+#include "printf.h"
+// #include <limits.h>
 
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
     /* cast to void types */
@@ -11,6 +13,9 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 
     init_uart();
     print_intro();
+
+    testPrint();
+
 
     /* print input */
     while (1) {
