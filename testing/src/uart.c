@@ -40,7 +40,7 @@ void init_uart()
 }
 
 /* puts a character to the TXE buffer */
-void uart_putc(unsigned char c)
+void uart_putc(void *p, char c)
 {
     while (read_reg(UART0_FR) & (1 << 5))
         ;                   /* TXE fifo is full */
@@ -60,7 +60,7 @@ void uart_print(const char *str)
 {
     for (size_t i = 0; str[i] != '\0'; i++)
     {
-        uart_putc((unsigned char)str[i]);
+        uart_putc(NULL, (unsigned char)str[i]);
     }
 }
 
@@ -74,4 +74,9 @@ void print_intro()
     uart_print("/\\_____\\  \\ \\_\\ \"\\_\\  \\ \\_____\\     \\ \\_____\\  \\/\\_____\\ \n");
     uart_print("\\/_____/   \\/_/ \\/_/   \\/_____/      \\/_____/   \\/_____/ \n");
     uart_print("\r\nHello, World!\r\n");
+}
+
+void invalid_vector_entry()
+{
+    uart_print("Invalid Vector Interrupt\r\n");
 }

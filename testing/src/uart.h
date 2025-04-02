@@ -51,7 +51,7 @@ enum
 void init_uart();
 
 /* puts a character to the TXE buffer */
-void uart_putc(unsigned char c);
+void uart_putc(void *p, char c);
 
 /* gets a character from the RXE buffer*/
 unsigned char uart_getc();
@@ -61,5 +61,8 @@ void uart_print(const char *str);
 
 /* prints JNC intro */
 void print_intro();
+
+/* print invalid vector table entry */
+void invalid_vector_entry();
 
 #endif
