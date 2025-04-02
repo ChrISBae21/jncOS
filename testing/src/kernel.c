@@ -16,7 +16,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
     init_printf(0, putc);
     int el = get_el();
 	printf("Exception level: %d \r\n", el);
-    // testPrint();
 
     /* print input */
     while (1) {
