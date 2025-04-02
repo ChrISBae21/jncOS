@@ -1,3 +1,5 @@
+#include "sysreg.h"
+
 .section ".text.boot"   /* boots OS in text-mode */
 
 .globl _start
@@ -19,13 +21,28 @@ memzero:
 	ret                 /* Done clearing memory */
 
 master:
-	adr	x0, __bss_start     /* Load the start addr */
+    ldr    x0, =SCTLR_VALUE_MMU_DISABLED	/* MMU config */
+    msr    sctlr_el1, x0        			/* disables MMU for el1 */
+
+    ldr    x0, =HCR_VALUE	/* hypervisor config */
+    msr    hcr_el2, x0		/* set hypervisor */
+
+    ldr    x0, =SPSR_VALUE	/* artificially setup processor state */
+    msr    spsr_el2, x0		/* set processor state for eret */
+
+    adr    x0, el1_entry    /* store label value of el1_entry */
+    msr    elr_el2, x0		/* elr_elx holds address to return to from eret */
+
+    eret     
+
+el1_entry:
+	adr	x0, __bss_start		/* Load the start addr */
 	adr	x1, __bss_end       /* Load the end addr */
 	sub	x1, x1, x0          /* Subtract to get length of the bss */
 	bl 	memzero             /* branch */
 
-	mov	sp, 0x80000     /* Address of Low of Stack */
-	bl	kernel_main     /* Branch to the Kernel main function */
-	b 	proc_hang		/* Could not branch to kernel_main */
+	mov	sp, 0x80000     	/* Address of Low of Stack */
+	bl	kernel_main     	/* Branch to the Kernel main function */
+	b 	proc_hang			/* Could not branch to kernel_main */
 
 

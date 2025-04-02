@@ -1,9 +1,7 @@
 #ifndef __UART_H__
 #define __UART_H__
 
-#include <stddef.h>
-#include <stdint.h>
-#include "utility.h"
+#include "util.h"
 
 enum {
     // The GPIO registers base address for BCM2700 (pi3)
@@ -46,16 +44,17 @@ enum {
 };
 
 /* UART uses GPIO pins 14 & 15 */
-void init_uart();
+extern void init_uart();
 
 /* puts a character to the TXE buffer */
-void uart_putc(unsigned char c);
+extern void uart_putc(unsigned char c);
+extern void putc(void* p, char c);
 
 /* gets a character from the RXE buffer*/
-unsigned char uart_getc();
+extern unsigned char uart_getc();
 
 /* prints a string */
-void uart_print(const char *str);
+extern void uart_print(const char *str);
 
 /* prints JNC intro */
 void print_intro();

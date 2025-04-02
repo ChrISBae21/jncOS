@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "uart.h"
 #include "printf.h"
+#include "util.h"
 // #include <limits.h>
 
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
@@ -13,8 +14,10 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 
     init_uart();
     print_intro();
-
-    testPrint();
+    init_printf(0, putc);
+    int el = get_el();
+	printf("Exception level: %d \r\n", el);
+    // testPrint();
 
 
     /* print input */

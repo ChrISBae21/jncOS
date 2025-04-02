@@ -1,213 +1,233 @@
+/*
+File: printf.c
+
+Copyright (C) 2004  Kustaa Nyholm
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+*/
+
 #include "printf.h"
-#include "strings.h"
-#include "uart.h"
-#include <limits.h>
 
-/* fmt is the literal string passed in */
-int printk(const char *fmt, ...) {
-    va_list args;   /* must declare  object va_list */
-    va_start(args, fmt);    /* grab the arguments */
-    int print_count = 0;
+typedef void (*putcf) (void*,char);
+static putcf stdout_putf;
+static void* stdout_putp;
 
-    for(int i = 0; fmt[i]; i++) {
-        if(fmt[i] == '%') {
-            i++;
-            switch(fmt[i]) {
-                case 'd':   /* int */
-                    print_count += print_int((int)va_arg(args, int));
-                    break;
 
-                case 'u':   /* unsigned int */
-                    print_count += print_uint((unsigned int)va_arg(args, unsigned int));
-                    break;
+#ifdef PRINTF_LONG_SUPPORT
 
-                case 'x':   /* int hex */
-                    print_count += print_hex((unsigned int)va_arg(args, unsigned int));
-                    break;
-                
-                case 'c':   /* char */
-                    print_char(va_arg(args, int));
-                    print_count++;
-                    break;
-                
-                case 'p':   /* pointer */
-                    print_count += print_pointer(va_arg(args, void*));
-                    break;
-
-                case 'h':   /* short */
-                    i++;
-                    switch(fmt[i]) {
-                        case 'd':   /* signed short */
-                            print_count += print_int((short)va_arg(args, int));
-                            break;
-                        case 'u':   /* unsigned short */
-                            print_count += print_uint((unsigned short)va_arg(args, unsigned int));
-                            break;
-                        case 'x':   /* short hex */
-                            print_count += print_hex((unsigned short)va_arg(args, unsigned int));
-                            break;
-                    }
-                    break;
-                
-                case 'l':   /* long */
-                    i++;
-                    switch(fmt[i]) {
-                        case 'd':   /* signed long */
-                            print_count += print_int((long)va_arg(args, long));
-                            break;
-                        case 'u':   /* unsigned long */
-                            print_count += print_uint((unsigned long)va_arg(args, unsigned long));
-                            break;
-                        case 'x':   /* long hex */
-                            print_count += print_hex((unsigned long)va_arg(args, unsigned long));  
-                            break;
-                    }
-                    break;
-
-                case 'q': /* long long */
-                    i++;
-                    switch(fmt[i]) {
-                        case 'd':   /* signed long long */
-                            print_count += print_int((long long)va_arg(args, long long));
-                            break;
-                        case 'u':   /* unsigned long long */
-                            print_count += print_uint((unsigned long long)va_arg(args, unsigned long long));
-                            break;
-                        case 'x':   /* long long hex */
-                            print_count += print_hex((unsigned long long)va_arg(args, unsigned long long));
-                            break;
-                    }
-                    break;
-                case 's':
-                    print_count += print_str(va_arg(args, char*));
-                    break;
-                
-                /* %% */
-                default:
-                    print_char('%');
-                    print_count++;
-                    break;
+static void uli2a(unsigned long int num, unsigned int base, int uc,char * bf)
+    {
+    int n=0;
+    unsigned int d=1;
+    while (num/d >= base)
+        d*=base;
+    while (d!=0) {
+        int dgt = num / d;
+        num%=d;
+        d/=base;
+        if (n || dgt>0|| d==0) {
+            *bf++ = dgt+(dgt<10 ? '0' : (uc ? 'A' : 'a')-10);
+            ++n;
             }
         }
-        else {
-            print_char(fmt[i]);
-            print_count++;
+    *bf=0;
+    }
+
+static void li2a (long num, char * bf)
+    {
+    if (num<0) {
+        num=-num;
+        *bf++ = '-';
         }
+    uli2a(num,10,0,bf);
     }
 
-    va_end(args);
-    return print_count;
+#endif
 
-}
-
-/* used for short (h), int (d), long (l), and long long (q) datatypes */
-int print_int(long long n) {
-    int count = 0;
-    if(n < 0) {
-        uart_putc('-');
-        n *= -1;
-        count += 1;
+static void ui2a(unsigned int num, unsigned int base, int uc,char * bf)
+    {
+    int n=0;
+    unsigned int d=1;
+    while (num/d >= base)
+        d*=base;
+    while (d!=0) {
+        int dgt = num / d;
+        num%= d;
+        d/=base;
+        if (n || dgt>0 || d==0) {
+            *bf++ = dgt+(dgt<10 ? '0' : (uc ? 'A' : 'a')-10);
+            ++n;
+            }
+        }
+    *bf=0;
     }
-    return count + print_uint(n);
-}
 
-/* used for unsigned short (hu), unsigned int (u), unsigned long (lu), and unsigned long long (qu) datatypes */
-int print_uint(unsigned long long n) {
-    int count = 0;
-    if(n >= 10) {
-        count = print_uint(n / 10);
+static void i2a (int num, char * bf)
+    {
+    if (num<0) {
+        num=-num;
+        *bf++ = '-';
+        }
+    ui2a(num,10,0,bf);
     }
-    uart_putc('0' + (n % 10));
-    return count + 1;
 
-}
-
-/* difference between unsigned and signed char? */
-void print_uchar(unsigned char c) {
-    uart_putc(c);
-}
-
-void print_char(char c) {
-    uart_putc((unsigned char)c);
-}
-
-
-int print_str(const char *s) {
-    int i;
-    for (i = 0; s[i] != '\0'; i++) {
-        uart_putc((unsigned char)s[i]);
+static int a2d(char ch)
+    {
+    if (ch>='0' && ch<='9')
+        return ch-'0';
+    else if (ch>='a' && ch<='f')
+        return ch-'a'+10;
+    else if (ch>='A' && ch<='F')
+        return ch-'A'+10;
+    else return -1;
     }
-    return i;
 
-}
+static char a2i(char ch, char** src,int base,int* nump)
+    {
+    char* p= *src;
+    int num=0;
+    int digit;
+    while ((digit=a2d(ch))>=0) {
+        if (digit>base) break;
+        num=num*base+digit;
+        ch=*p++;
+        }
+    *src=p;
+    *nump=num;
+    return ch;
+    }
 
-int print_hex(unsigned long long n) {
-    int count = 0;
-    /* base case if all values shifted out */
-    if(n == 0) return 0;
-    
-    /* recurse for each nibble */
-    count = print_hex(n >> 4);
-    
-    /* grab nibble by masking */
-    int val = n & 0xF;
-    /* values 0-9 */
+static void putchw(void* putp,putcf putf,int n, char z, char* bf)
+    {
+    char fc=z? '0' : ' ';
+    char ch;
+    char* p=bf;
+    while (*p++ && n > 0)
+        n--;
+    while (n-- > 0)
+        putf(putp,fc);
+    while ((ch= *bf++))
+        putf(putp,ch);
+    }
 
-    uart_putc(HEX_CHAR(val));
+void tfp_format(void* putp,putcf putf,char *fmt, va_list va)
+    {
+    char bf[12];
 
-    return count + 1;
-}
+    char ch;
 
-int print_pointer(void* ptr) {
-    int count = 2;
 
-    uart_putc('0');
-    uart_putc('x');
-    return count + print_hex((unsigned long long)ptr);
-    
-}
+    while ((ch=*(fmt++))) {
+        if (ch!='%')
+            putf(putp,ch);
+        else {
+            char lz=0;
+#ifdef  PRINTF_LONG_SUPPORT
+            char lng=0;
+#endif
+            int w=0;
+            ch=*(fmt++);
+            if (ch=='0') {
+                ch=*(fmt++);
+                lz=1;
+                }
+            if (ch>='0' && ch<='9') {
+                ch=a2i(ch,&fmt,10,&w);
+                }
+#ifdef  PRINTF_LONG_SUPPORT
+            if (ch=='l') {
+                ch=*(fmt++);
+                lng=1;
+            }
+#endif
+            switch (ch) {
+                case 0:
+                    goto abort;
+                case 'u' : {
+#ifdef  PRINTF_LONG_SUPPORT
+                    if (lng)
+                        uli2a(va_arg(va, unsigned long int),10,0,bf);
+                    else
+#endif
+                    ui2a(va_arg(va, unsigned int),10,0,bf);
+                    putchw(putp,putf,w,lz,bf);
+                    break;
+                    }
+                case 'd' :  {
+#ifdef  PRINTF_LONG_SUPPORT
+                    if (lng)
+                        li2a(va_arg(va, unsigned long int),bf);
+                    else
+#endif
+                    i2a(va_arg(va, int),bf);
+                    putchw(putp,putf,w,lz,bf);
+                    break;
+                    }
+                case 'x': case 'X' :
+#ifdef  PRINTF_LONG_SUPPORT
+                    if (lng)
+                        uli2a(va_arg(va, unsigned long int),16,(ch=='X'),bf);
+                    else
+#endif
+                    ui2a(va_arg(va, unsigned int),16,(ch=='X'),bf);
+                    putchw(putp,putf,w,lz,bf);
+                    break;
+                case 'c' :
+                    putf(putp,(char)(va_arg(va, int)));
+                    break;
+                case 's' :
+                    putchw(putp,putf,w,0,va_arg(va, char*));
+                    break;
+                case '%' :
+                    putf(putp,ch);
+                default:
+                    break;
+                }
+            }
+        }
+    abort:;
+    }
 
-void testPrint() {
-    printk("%c", 'a'); // should be "a"
-    uart_putc('\n');
-    printk("%c", 'Q'); // should be "Q"
-    uart_putc('\n');
-    printk("%c", 256 + '9'); // Should be "9"
-    uart_putc('\n');
-    printk("%s", "test string"); // "test string"
-    uart_putc('\n');
-    printk("foo%sbar", "blah"); // "fooblahbar"
-    uart_putc('\n');
-    printk("foo%%sbar"); // "foo%bar"
-    uart_putc('\n');
-    printk("%d", INT_MIN); // "-2147483648"
-    uart_putc('\n');
-    printk("%d", INT_MAX); // "2147483647"
-    uart_putc('\n');
-    printk("%u", 0); // "0"
-    uart_putc('\n');
-    printk("%u", UINT_MAX); // "4294967295"
-    uart_putc('\n');
-    printk("%x", 0xDEADbeef); // "deadbeef"
-    uart_putc('\n');
-    printk("%p", (void*)UINTPTR_MAX); // "0xFFFFFFFFFFFFFFFF"
-    uart_putc('\n');
-    printk("%hd", 0x8000); // "-32768"
-    uart_putc('\n');
-    printk("%hd", 0x7FFF); // "32767"
-    uart_putc('\n');
-    printk("%hu", 0xFFFF); // "65535"
-    uart_putc('\n');
-    printk("%ld", LONG_MIN); // "-9223372036854775808"
-    uart_putc('\n');
-    printk("%ld", LONG_MAX); // "9223372036854775807"
-    uart_putc('\n');
-    printk("%lu", ULONG_MAX); // "18446744073709551615"
-    uart_putc('\n');
-    printk("%qd", LONG_MIN); // "-9223372036854775808"
-    uart_putc('\n');
-    printk("%qd", LONG_MAX); // "9223372036854775807"
-    uart_putc('\n');
-    printk("%qu", ULONG_MAX); // "18446744073709551615"
-    uart_putc('\n');
-}
+
+void init_printf(void* putp,void (*putf) (void*,char))
+    {
+    stdout_putf=putf;
+    stdout_putp=putp;
+    }
+
+void tfp_printf(char *fmt, ...)
+    {
+    va_list va;
+    va_start(va,fmt);
+    tfp_format(stdout_putp,stdout_putf,fmt,va);
+    va_end(va);
+    }
+
+static void putcp(void* p,char c)
+    {
+    *(*((char**)p))++ = c;
+    }
+
+
+
+void tfp_sprintf(char* s,char *fmt, ...)
+    {
+    va_list va;
+    va_start(va,fmt);
+    tfp_format(&s,putcp,fmt,va);
+    putcp(&s,0);
+    va_end(va);
+    }
