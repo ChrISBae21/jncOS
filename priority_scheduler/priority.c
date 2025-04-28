@@ -174,6 +174,7 @@ void print_scheduler() {
 
 // Helper function to create a new task
 task* create_task(char symbol, uint8_t priority) {
+    /* TODO still need custom malloc but tasks will be stored in reserved memory */
     task* new_task = (task*)malloc(sizeof(task));
     new_task->symbol = symbol;
     new_task->priority_level = priority;
