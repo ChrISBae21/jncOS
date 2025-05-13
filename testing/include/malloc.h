@@ -1,0 +1,1 @@
+void *static_malloc(uint64_t size);

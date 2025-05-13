@@ -85,4 +85,7 @@ SECTIONS
         __bss_end = .;
 
     } 
+
+    __heap_start = ALIGN(16);
+    __heap_end = __heap_start + 0x100000; /* 1 MiB */
 }
